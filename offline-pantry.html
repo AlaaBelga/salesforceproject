@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline pantry pickup log</title>
+<style>
+body{font:1rem system-ui;max-width:52rem;margin:2rem auto;padding:0 1rem;color:#14312b;background:#f8faf9}
+label{display:block;margin:1rem 0}input,button{font:inherit;padding:.55rem}button{margin-right:.4rem}table{width:100%;border-collapse:collapse;margin:1rem 0}th,td{text-align:left;padding:.5rem;border-bottom:1px solid #bac9c4}
+</style>
+<main>
+<h1>Offline pantry pickup log</h1>
+<p>Record pickups here when the parking lot has no signal. Export the CSV before closing this page. Enter the pickups in Salesforce when you’re back online.</p>
+<form id="pickup">
+<label>Pickup date <input id="date" type="date" required></label>
+<label>Household reference <input id="household" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9-]*" required> Use an existing household ID.</label>
+<label><input id="anonymous" type="checkbox"> Anonymous pickup</label>
+<label>People served <input id="people" type="number" min="1" max="999" required></label>
+<button>Add pickup</button>
+</form>
+<p id="message" role="status"></p>
+<table><thead><tr><th>Date</th><th>Household</th><th>People</th><th>Bags</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table>
+<button id="download" disabled>Export pickup CSV</button>
+</main>
+<script>
+const byId = id => document.getElementById(id);
+const pickups = [];
+let exported = true;
+const today = new Date();
+byId('date').value = [today.getFullYear(), today.getMonth() + 1, today.getDate()]
+    .map(value => String(value).padStart(2, '0')).join('-');
+byId('anonymous').addEventListener('change', event => {
+    byId('household').disabled = event.target.checked;
+    byId('household').required = !event.target.checked;
+});
+function render() {
+    const body = byId('rows');
+    body.replaceChildren();
+    pickups.forEach((pickup, index) => {
+        const row = body.insertRow();
+        for (const value of [pickup.date, pickup.household || 'Anonymous', pickup.people, pickup.bags]) {
+            row.insertCell().textContent = value;
+        }
+        const remove = document.createElement('button');
+        remove.textContent = 'Remove';
+        remove.addEventListener('click', () => {
+            pickups.splice(index, 1);
+            exported = false;
+            render();
+        });
+        row.insertCell().append(remove);
+    });
+    byId('download').disabled = pickups.length === 0;
+    byId('message').textContent = pickups.length + ' pickups in this log';
+}
+byId('pickup').addEventListener('submit', event => {
+    event.preventDefault();
+    const anonymous = byId('anonymous').checked;
+    const people = Number(byId('people').value);
+    pickups.push({
+        date: byId('date').value,
+        household: anonymous ? '' : byId('household').value,
+        anonymous,
+        people,
+        bags: people <= 3 ? 1 : people <= 6 ? 2 : 3
+    });
+    exported = false;
+    byId('household').value = '';
+    byId('people').value = '';
+    render();
+});
+byId('download').addEventListener('click', () => {
+    const csv = ['Pickup_Date,Household_Reference,Anonymous,People_Served,Bags',
+        ...pickups.map(row => [row.date, row.household, row.anonymous, row.people, row.bags].join(','))]
+        .join('\r\n') + '\r\n';
+    const url = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'offline-pantry-pickups.csv';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    exported = true;
+    byId('message').textContent = 'CSV export started. Check your Downloads folder before closing.';
+});
+window.addEventListener('beforeunload', event => {
+    if (pickups.length && !exported) {
+        event.preventDefault();
+        event.returnValue = true;
+    }
+});
+</script>
+</html>

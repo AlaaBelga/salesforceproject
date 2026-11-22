@@ -1,0 +1,13 @@
+# Client data and case material must never be committed
+*.csv
+*.xlsx
+data/
+sow*
+kickoff*
+notes*
+
+# Salesforce tooling
+.sfdx/
+.sf/
+node_modules/
+.vscode/

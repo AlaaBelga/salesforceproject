@@ -1,0 +1,138 @@
+<template>
+    <lightning-card title="Participant summary" icon-name="standard:person_account">
+        <lightning-button-icon
+            slot="actions"
+            icon-name="utility:refresh"
+            alternative-text="Refresh summary"
+            title="Refresh"
+            onclick={handleRefresh}
+        ></lightning-button-icon>
+
+        <div class="summary slds-var-p-horizontal_medium slds-var-p-bottom_medium">
+            <template lwc:if={isLoading}>
+                <div class="loading slds-is-relative">
+                    <lightning-spinner alternative-text="Loading summary" size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <template lwc:if={errorMessage}>
+                <div class="notice notice_error" role="alert">
+                    <p class="notice-title">The summary could not be loaded.</p>
+                    <p>{errorMessage}</p>
+                    <p>Use the refresh button to try again.</p>
+                </div>
+            </template>
+
+            <template lwc:if={showContent}>
+                <!-- Who this is, and what to pack: the first thing Omar needs -->
+                <div class="header">
+                    <div class="person-name">{view.title}</div>
+                    <template lwc:if={view.hasHousehold}>
+                        <div class="household-name">Household: {view.householdName}</div>
+                        <div class="size-row">
+                            <span class="size-big">{view.householdSizeText}</span>
+                            <template lwc:if={view.bagsText}>
+                                <span class="bags">{view.bagsText}</span>
+                            </template>
+                        </div>
+                        <div class="muted">{view.sizeNote}</div>
+                        <template lwc:if={view.multipleHouseholds}>
+                            <div class="muted">{view.multipleHouseholdsText}</div>
+                        </template>
+                    </template>
+                    <template lwc:else>
+                        <div class="muted">No household linked to this record yet.</div>
+                    </template>
+                </div>
+
+                <!-- Brand new person: say so, never a blank page -->
+                <template lwc:if={showEmptyState}>
+                    <div class="notice notice_empty">
+                        <p class="notice-title">Nothing on file yet.</p>
+                        <p>
+                            This looks like a new person. No household, enrollments, class sessions or
+                            visits are recorded. That is normal for a first visit.
+                        </p>
+                    </div>
+                </template>
+
+                <template lwc:if={showDetails}>
+                    <!-- Saturday Food Pantry -->
+                    <section class="block">
+                        <h3 class="block-title">Saturday Food Pantry</h3>
+                        <div class={view.pantry.answerClass}>{view.pantry.answerText}</div>
+
+                        <template lwc:if={view.pantry.hasVisits}>
+                            <div class="line">{view.pantry.lastVisitText}</div>
+                            <div class="weeks" role="img" aria-label={view.pantry.visitsText}>
+                                <template for:each={view.pantry.weekCells} for:item="cell">
+                                    <span key={cell.key} class={cell.className} title={cell.title}></span>
+                                </template>
+                            </div>
+                            <div class="muted">{view.pantry.visitsText}</div>
+                            <template lwc:if={view.pantry.showLapsed}>
+                                <div class="answer answer_check">{view.pantry.lapsedText}</div>
+                            </template>
+                        </template>
+                        <template lwc:elseif={view.pantry.noVisitsText}>
+                            <div class="muted">{view.pantry.noVisitsText}</div>
+                        </template>
+                    </section>
+
+                    <!-- Cooking and Nutrition Class -->
+                    <section class="block">
+                        <h3 class="block-title">Cooking and Nutrition Class</h3>
+
+                        <template lwc:if={view.classes.nextClass}>
+                            <div class="answer answer_yes">{view.classes.nextText}</div>
+                        </template>
+                        <template lwc:else>
+                            <div class="answer answer_none">{view.classes.nextText}</div>
+                        </template>
+
+                        <div class="line">{view.classes.lastText}</div>
+
+                        <template lwc:if={view.classes.hasEnrollment}>
+                            <template for:each={view.classes.enrollments} for:item="enrollment">
+                                <div key={enrollment.key} class="enrollment">
+                                    <div class="enrollment-head">
+                                        <span class="enrollment-title">{enrollment.title}</span>
+                                        <span class="slds-badge">{enrollment.statusText}</span>
+                                    </div>
+                                    <div class="muted">{enrollment.startText}</div>
+                                    <div class="line">{enrollment.progressText}</div>
+                                    <lightning-progress-bar
+                                        value={enrollment.percent}
+                                        size="large"
+                                    ></lightning-progress-bar>
+                                    <div class="muted">{enrollment.progressNote}</div>
+                                </div>
+                            </template>
+                        </template>
+                        <template lwc:else>
+                            <div class="muted">Not enrolled in the cooking class.</div>
+                        </template>
+
+                        <template lwc:if={view.classes.hasRecent}>
+                            <h4 class="sub-title">Recent sessions</h4>
+                            <ul class="sessions">
+                                <template for:each={view.classes.recent} for:item="session">
+                                    <li key={session.key} class="session-row">
+                                        <span class="session-when">{session.when}</span>
+                                        <span class="session-name">{session.name}</span>
+                                        <span class={session.badgeClass}>{session.label}</span>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                    </section>
+                </template>
+
+                <p class="footer muted">
+                    Read only. Visits from before go-live are on paper and are not shown. Not being on
+                    file never means being turned away.
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
