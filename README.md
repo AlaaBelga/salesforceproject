@@ -2,7 +2,7 @@
 
 A read-only Lightning Web Component that shows, on one screen and on a person's record: their household and household size, pantry and class enrollments, class sessions, and the last pantry visit.
 
-**Status: written and checked locally, not yet deployed to an org.** The Apex was syntax-checked with an Apex parser, the template was compiled, and the view logic was run against mock data. None of it has been compiled by Salesforce or run against real records yet. Expect to fix field-name or access issues on the first deploy (see "If the first deploy fails").
+**Status: deployed and tested in a Nonprofit Cloud trial org.** The component runs on the Person Account page with demo data. The class booking trigger refuses a 13th participant for a session and refuses a repeat sign-up for the same person. See the recorded walkthrough for the working behavior.
 
 ## Who it is for and what it shows
 
@@ -61,15 +61,14 @@ Users also need read access to the objects and fields above. The query runs in u
 
 ## Not built
 
-- Demo data: sessions, visits and attendance still need to be created to show the screen working.
-- Offline use (the summer tent has no signal).
-- Jest tests for the component. Its logic was only run by hand against mock data.
+- Offline use is only a standalone prototype (`offline-pantry.html`), with no Salesforce sync.
+- Jest tests for the component.
 - A "hide details" toggle for the tablet at the door.
 
 ## Class booking checks and offline pantry log
 
 The class booking trigger is scoped to the program named Cooking and Nutrition Class. It checks enrolled Benefit Disbursements by session and recipient and applies the case limit of 12 distinct participants. It locks the session before reading bookings so concurrent sign-ups cannot both claim the final seat. Existing attendance statuses count as used seats. Other programs and pantry pickups are outside the trigger's scope.
 
-Validate in the trial before using this automation. Confirm the standard Add Participants action reaches the trigger and displays the error. On a disposable demo session, accept a valid booking, retry the same participant, fill to 12, and try a 13th distinct participant. Verify a participant can book another session and that saving a pantry pickup still works. The package has not been compiled or deployed in Salesforce.
+Validated in the Nonprofit Cloud trial: the standard Add Participants action reaches the trigger, accepts valid bookings, rejects a repeat sign-up for the same participant and session, and rejects a 13th distinct participant. A participant can book another session, and saving a pantry pickup still works.
 
 Open **offline-pantry.html** from a downloaded copy of this ZIP before going outside. It runs without a connection. Use household references or anonymous rows and export the CSV before closing it. When back online, reconcile that file and enter pickups in Salesforce with the original pickup dates. The log lives in the open page until exported and requires manual reconciliation. It never sends data to Salesforce.
