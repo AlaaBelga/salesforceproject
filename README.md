@@ -59,11 +59,10 @@ Users also need read access to the objects and fields above. The query runs in u
 - **Test failures in the record tests.** They need Person Accounts and Contacts to Multiple Accounts. The tests that need no data (bags, weeks, lapsed flag, program keywords) should pass regardless.
 - **The summary loads but shows nothing for a person you know has data.** The queries assume the model in the table above. If sign-ups or visits are stored differently, adjust the `BenefitDisbursement` query in `buildSummary`.
 
-## Not built
+## Not built/ to be improved
 
 - The standalone offline pantry log (`offline-pantry.html`) holds entries in memory until CSV export; exported pickups require manual entry in Salesforce. It does not sync.
 - Jest tests for the component.
-- A "hide details" toggle for the tablet at the door.
 
 ## Class booking checks and offline pantry log
 
